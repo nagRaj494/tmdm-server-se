@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:jaxrs="http://cxf.apache.org/jaxrs" xmlns:jaxws="http://cxf.apache.org/jaxws" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:hz="http://www.hazelcast.com/schema/spring" 
+    xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
+http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
+http://www.hazelcast.com/schema/spring http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd">
+
+    <!-- MDM -->
+    <import resource="classpath*:META-INF/mdm-context.xml" />
+    <context:property-placeholder location="${mdm.root.url}/conf/mdm.conf" ignore-unresolvable="true" local-override="false"/>
+
+    <!-- CXF Services -->
+    <import resource="classpath:META-INF/cxf/cxf.xml" />
+
+    <jaxrs:server id="services" address="/rest">
+        <jaxrs:serviceBeans>
+            <!-- MDM Transaction service -->
+            <bean class="com.amalto.core.storage.transaction.TransactionService" />
+            <!-- Staging validation service -->
+            <bean class="com.amalto.core.storage.task.staging.StagingTaskService" />
+            <!-- Data related services -->
+            <bean class="com.amalto.core.storage.services.SystemModels" />
+            <bean class="com.amalto.core.storage.services.SystemContainers" />
+            <!-- Statistics services -->
+            <bean class="com.amalto.core.storage.services.JournalStatistics" />
+            <bean class="com.amalto.core.storage.services.DataStatistics" />
+            <bean class="com.amalto.core.storage.services.EventStatistics" />
+        </jaxrs:serviceBeans>
+        <jaxrs:providers>
+            <bean class="com.amalto.core.storage.task.staging.SerializableListWriter" />
+	    <bean class="org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider" />
+        </jaxrs:providers>
+    </jaxrs:server>
+
+    <!-- Legacy services -->
+    <jaxws:endpoint implementor="com.amalto.core.webservice.XtentisWSBean" address="/soap" />
+
+    <!-- JAAS -->
+    <bean id="jaasAuthenticationProvider" class="org.springframework.security.authentication.jaas.JaasAuthenticationProvider">
+        <property name="loginConfig" value="${mdm.root.url}/conf/jaas.conf" />
+        <property name="loginContextName" value="MDM" />
+        <property name="callbackHandlers">
+            <list>
+                <bean class="org.springframework.security.authentication.jaas.JaasNameCallbackHandler" />
+                <bean class="org.springframework.security.authentication.jaas.JaasPasswordCallbackHandler" />
+            </list>
+        </property>
+        <property name="authorityGranters">
+            <list>
+                <bean class="com.amalto.core.server.security.jaas.DefaultAuthorityGranter" />
+            </list>
+        </property>
+    </bean>
+
+    <!-- Hazelcast -->
+    <hz:hazelcast id="hazelcast">
+        <hz:config>
+            <hz:group name="dev" password="password"/>
+            <hz:network port="5705" port-auto-increment="true">
+                <hz:join>
+                    <hz:multicast enabled="false"/>
+                    <hz:tcp-ip enabled="true">
+                        <hz:members>127.0.0.1</hz:members>
+                    </hz:tcp-ip>
+                </hz:join>
+            </hz:network>
+        </hz:config>
+    </hz:hazelcast>
+
+</beans>

@@ -1,0 +1,119 @@
+<html>
+<head>
+<title>Talend MDM Log Viewer</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel='shortcut icon' href='../auth/favicon.ico'/>
+<link rel='stylesheet' type='text/css' href='../auth/googleapi/fonts.css'/>
+<script type="text/javascript" language="javascript" src="../secure/ext-2.2/adapter/prototype/prototype.js"></script>
+<script type="text/javascript" language="javascript" src="logviewer.js"></script>
+<style>
+body {
+    margin: 1;
+    font-family: "Source Sans Pro", Tahoma;
+    font: normal 13px "Source Sans Pro";
+    background-color:#FFFFFF;
+}
+
+#logScroller {
+    height: 93%;
+    background: #F3F3F3;
+    color: black;
+    overflow: auto;
+    border: #E0E0E0 solid 1px;
+    margin: 5px;
+}
+pre {
+    white-space: pre-wrap; /* css-3 */
+    white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+    white-space: -pre-wrap; /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* Internet Explorer 5.5+ */
+    margin: 1;
+    font-family: "Source Sans Pro";
+    font-size: 13px;
+}
+#logToolbar {
+    font-family: "Source Sans Pro";
+    font-size: 13px;
+}
+#logToolbarLeft {
+    position: absolute;
+    left: 5;
+}
+#logToolbarRight {
+    position: absolute;
+    right: 5;
+}
+input[type="button"] {
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: "Source Sans Pro";
+    width: 85px;
+    height: 30px;
+    background-color: #00a6ce;
+    border: 1px solid transparent;
+}
+
+input[type="button"]:active {
+    background-color: #C0D72D;
+}
+
+input[type="button"]:disabled {
+    cursor: none;
+    background-color: #D7D7D7;
+}
+
+input[type="text"] {
+    font-family: "Source Sans Pro";
+    color: black;
+    font-size: 15px;
+    background-color: white;
+    border: 1px solid gray;
+    -webkit-box-shadow: 0 0 0px 1000px white inset;
+}
+
+</style>
+</head>
+<body>
+    <div id="logScroller">
+        <pre id="logContent"></pre>
+    </div>
+    <div id="logToolbar">
+        <div id="logToolbarLeft">
+            <select name="logFile" id="logFile" onchange="changeLog(this)">
+                <option value="../services/logviewer/log" selected>Log file</option>
+                <option value="../services/logviewer/match">Match log file</option>
+                <option value="../services/logviewer/job">Jobs log file</option>
+            </select>
+            <input type="button" value="Reload" onclick="window.location.reload();">
+            <input type="button" value="Clear" onclick="clearLog();">
+            <input type="button" value="Download" onclick="downloadLog();">
+            <input type="button" id="toggleLoad" onclick="toggleLoading();" style="margin-left:30px;">
+            <img id="spinner" alt="" src="../secure/ext-2.2/resources/images/default/shared/loading-balls.gif" />
+        </div>
+        <div id="logToolbarRight">
+            Fetch Period: <input type="text" size="6" name="frequency" id="logFetchPeriod" />
+            Max lines: <input type="text" size="6" name="maxlines" id="logMaxLines" />
+            <input type="button" value="Set Params" onclick="FETCH_PERIOD=parseInt($('logFetchPeriod').value);MAX_LINES=parseInt($('logMaxLines').value);">
+        </div>
+    </div>
+    <script>
+        function downloadLog() {
+            var selectedLog = getLogSelection($("logFile"));
+            window.open(selectedLog,'_self');
+        }
+        function getLogSelection(selectLog) {
+            return selectLog.options[selectLog.selectedIndex].value;
+        }
+        function changeLog(selectLog) {            
+            initLog(getLogSelection(selectLog), $("logContent"), $("logScroller"), $("spinner"), $("toggleLoad"));
+            clearLog();
+            $("logFetchPeriod").value = FETCH_PERIOD;
+            $("logMaxLines").value = MAX_LINES;
+        }
+        changeLog($("logFile"));
+
+    </script>
+</body>
+</html>
